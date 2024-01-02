@@ -1,0 +1,63 @@
+
+Loading the necessary packages
+```{r}
+library(readxl) # reading excel
+library(tidyverse) # THE tidyverse
+library(janitor) # For data cleaning
+library(ggplot2) # For my kind of plotting
+library(dplyr) # For data wrangling
+library(scales)  # For more control over scales
+```
+  
+Loading and cleaning the data
+```{r}
+  data<- read_excel("hit and run cases.xlsx")
+data<- clean_names(data)
+```
+
+
+Doing some calculations
+```{r}
+
+# Calculate the new metrics
+data <- data %>%
+  mutate(
+    killed_per_vehicle = number_of_persons_killed / total_number_of_registered_motor_vehicles,
+    injured_per_vehicle = number_of_persons_injured / total_number_of_registered_motor_vehicles
+  )
+
+# Convert year to a Date format for plotting
+data$year <- as.Date(as.character(data$year), format = "%Y")
+```
+
+Creaing a WSJ looking visualisation using ggplot2
+```{r}
+# WSJ-style color palette
+wsj_palette <- c("Killed per Vehicle" = "#4C72B0", "Injured per Vehicle" = "#55A868")
+
+# Create the plot
+ggplot(data, aes(x = year)) +
+  geom_line(aes(y = killed_per_vehicle, colour = "Killed per Vehicle"), size = 1) +
+  geom_line(aes(y = injured_per_vehicle, colour = "Injured per Vehicle"), size = 1) +
+  scale_colour_manual(values = wsj_palette) +
+  labs(title = "Trends in Road Safety",
+       subtitle = "People Killed and Injured per Registered Vehicle Over Time",
+       x = "Year",
+       y = "Number per Vehicle",
+       caption = "Source: https://morth.nic.in/road-accident-in-india") +
+  theme_minimal() +
+    theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        plot.title = element_text(size = 14, face = "bold", hjust = 0.5),  # Center-align the title
+        plot.subtitle = element_text(size = 12, hjust = 0.5),  # Center-align the subtitle
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        plot.caption = element_text(size = 8, hjust = 0)) +
+  scale_x_date(labels = date_format("%Y"), breaks = date_breaks("2 years")) # Adjust date breaks as needed
+```
+
+Saving the graphic
+```{r}
+ggsave("wsj_style_plot.png", width = 10, height = 6)
+```
+
