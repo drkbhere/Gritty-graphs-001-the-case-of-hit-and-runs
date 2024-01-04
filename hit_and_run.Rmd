@@ -23,12 +23,17 @@ data<- clean_names(data)
 
 Doing some calculations
 ```{r}
+data<- data %>%
+  mutate(
+    total_number_of_registered_motor_vehicles = 1000* total_number_of_registered_motor_vehicles #because the number of registered vehicles was reported in 1000s in the charts. 
+  )
 
 # Calculate the new metrics
 data <- data %>%
   mutate(
     killed_per_vehicle = number_of_persons_killed / total_number_of_registered_motor_vehicles,
-    injured_per_vehicle = number_of_persons_injured / total_number_of_registered_motor_vehicles
+    injured_per_vehicle = number_of_persons_injured / total_number_of_registered_motor_vehicles,
+    accidents_per_vehicle = total_number_of_accidents / total_number_of_registered_motor_vehicles
   )
 
 # Convert year to a Date format for plotting
@@ -37,32 +42,55 @@ data$year <- as.Date(as.character(data$year), format = "%Y")
 
 Creaing a WSJ looking visualisation using ggplot2
 ```{r}
-# WSJ-style color palette
-wsj_palette <- c("Killed per Vehicle" = "#4C72B0", "Injured per Vehicle" = "#55A868")
+# WSJ-style color palette (consider using a color-blind friendly palette)
+wsj_palette <- c("Killed per Vehicle" = "#4C72B0", 
+                 "Injured per Vehicle" = "#55A868",
+                 "Accidents per Vehicle" = "#DD8452") # Add a new color for accidents per vehicle
 
-# Create the plot
+# Create the plot with enhanced readability and custom theme
 ggplot(data, aes(x = year)) +
   geom_line(aes(y = killed_per_vehicle, colour = "Killed per Vehicle"), size = 1) +
   geom_line(aes(y = injured_per_vehicle, colour = "Injured per Vehicle"), size = 1) +
+  geom_line(aes(y = accidents_per_vehicle, colour = "Accidents per Vehicle"), size = 1) + # Add this line
   scale_colour_manual(values = wsj_palette) +
   labs(title = "Trends in Road Safety",
-       subtitle = "People Killed and Injured per Registered Vehicle Over Time",
+       subtitle = "Metrics per Registered Vehicle Over Time",
        x = "Year",
        y = "Number per Vehicle",
        caption = "Source: https://morth.nic.in/road-accident-in-india") +
   theme_minimal() +
-    theme(legend.position = "bottom",
+  theme(legend.position = "bottom",
         legend.title = element_blank(),
-        plot.title = element_text(size = 14, face = "bold", hjust = 0.5),  # Center-align the title
-        plot.subtitle = element_text(size = 12, hjust = 0.5),  # Center-align the subtitle
+        plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = 12, hjust = 0.5),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         plot.caption = element_text(size = 8, hjust = 0)) +
-  scale_x_date(labels = date_format("%Y"), breaks = date_breaks("2 years")) # Adjust date breaks as needed
+  scale_x_date(labels = date_format("%Y"), breaks = date_breaks("2 years")) 
 ```
 
-Saving the graphic
+Creaing a WSJ looking visualisation using ggplot2 for per vehicle numbers
 ```{r}
-ggsave("wsj_style_plot.png", width = 10, height = 6)
+# Creating the plot
+ggplot(data) +
+  geom_line(aes(x = year, y = total_number_of_accidents, colour = "Accidents"), size = 1) +
+  geom_line(aes(x = year, y = number_of_persons_killed, colour = "Killed"), size = 1) +
+  geom_line(aes(x = year, y = number_of_persons_injured, colour = "Injured"), size = 1) +
+  scale_colour_manual(values = c("Accidents" = "#4C72B0", "Killed" = "#C44E52", "Injured" = "#55A868")) +
+  labs(title = "Road Safety Trends Over Time",
+       subtitle = "Number of Accidents, Persons Killed, and Injured Per Year",
+       x = "Year",
+       y = "Count",
+       caption = "Source: https://morth.nic.in/road-accident-in-india") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = 12, hjust = 0.5),
+        axis.text = element_text(size = 8),
+        axis.title = element_text(size = 12),
+        plot.caption = element_text(size = 8, hjust = 0)) +
+  scale_x_date(labels = date_format("%Y"), breaks = date_breaks("1 year"))
+
 ```
 
